@@ -1,6 +1,78 @@
-# MCP Server Template (FastMCP + optional drd toolkit)
+# MCP Server Template (FastMCP + drd toolkit)
 
-Minimal template for building Python MCP servers with the official `mcp` SDK (FastMCP). Use it to spin up new MCP servers quickly (one repo per tool/integration) with optional `drdroid-debug-toolkit` integration.
+Minimal template for building Python MCP servers with the official `mcp` SDK (FastMCP) and [drdroid-debug-toolkit](https://github.com/DrDroidLab/drdroid-debug-toolkit). Use it to spin up a new MCP server per tool (Metabase, Signoz, Grafana, etc.) with minimal edits.
+
+---
+
+## Create a new MCP server from this template
+
+### 1. Create a new repo from the template
+
+- **On GitHub:** Open this repo → click **Use this template** → **Create a new repository**. Name it e.g. `metabase-mcp-server` or `signoz-mcp-server`. Clone your new repo locally.
+- **Or** clone this template and re-init as your own repo:
+
+  ```bash
+  git clone <this-template-url> my-mcp-server && cd my-mcp-server
+  rm -rf .git && git init && git add . && git commit -m "Initial commit from mcp-server-template"
+  ```
+
+### 2. Rename the package and entrypoint
+
+- Rename the package folder: `src/mcp_template/` → `src/<name>_mcp_server/` (e.g. `src/metabase_mcp_server/`).
+- In **`pyproject.toml`**: set `name = "metabase-mcp-server"` (or your tool name), and set `project.scripts` to your package’s `server:main`, e.g. `metabase-mcp-server = "metabase_mcp_server.server:main"`.
+- In **all Python files** under `src/<name>_mcp_server/`: replace `mcp_template` with your package name (e.g. `metabase_mcp_server`).
+
+### 3. Add the drd toolkit and Django
+
+- In **`pyproject.toml`** (or **`requirements.txt`**), add:
+  - `drdroid-debug-toolkit` (e.g. `git+https://github.com/DrDroidLab/drdroid-debug-toolkit.git@master`)
+  - `django` (required by the toolkit at import time).
+- Install: `uv sync` or `pip install -e ".[dev]"`.
+
+### 4. Edit the connector (`connector.py`)
+
+- **File:** `src/<name>_mcp_server/connector.py`
+- **What to do:** Uncomment the Metabase example block. For **Metabase** keep it as-is; for **another source** (e.g. Signoz) change `Source`, `SourceKeyType`, and the `keys` in `build_*_connector` to match that source’s proto. Ensure `MCP_CONNECTOR_NAME` and `MCP_CONNECTOR_ID` match what your manager will use.
+
+### 5. Edit the provider and manager (`example_source_provider.py`)
+
+- **File:** `src/<name>_mcp_server/example_source_provider.py`
+- **What to do:** Uncomment the full example block.
+  - **Manager:** Point to your drd `SourceManager` (e.g. `MetabaseSourceManager` or `SignozSourceManager`) and your `build_*_connector` from `connector.py`.
+  - **Provider:** In `super().__init__(...)` set:
+    - **`Source.METABASE`** (or `Source.SIGNOZ`, etc.) to your drd source enum.
+    - **`prefix="metabase"`** (or `"signoz"`, etc.) to your tool name; this becomes the MCP tool name prefix (e.g. `metabase_list_databases`).
+- Rename the class if you like (e.g. `ExampleToolProvider` → `MetabaseToolProvider`) and update imports in `server.py`.
+
+### 6. Wire the provider and config in `server.py`
+
+- **File:** `src/<name>_mcp_server/server.py`
+- **What to do:**
+  1. At the top (before other local imports), add the **toolkit path** setup so `core` is importable (see [metabase-mcp-server](https://github.com/your-org/metabase-mcp-server) `server.py` for the block that inserts `drdroid_debug_toolkit` into `sys.path`).
+  2. Load backend config (URL, API key) from env or `config.py`.
+  3. Create your provider and set it: `_provider = MetabaseToolProvider(url, api_key)` (or `set_tool_provider(...)`), so it runs before `main()`.
+
+### 7. Config and env
+
+- Add backend URL and API key to **`config.py`** (e.g. `SERVICE_URL`, `SERVICE_API_KEY`) or use env vars only.
+- Copy **`.env.example`** to **`.env`** and set the variables. The server and tests read from the repo root.
+
+### 8. Start the server
+
+From the repo root (where `pyproject.toml` and `src/` are):
+
+```bash
+uv venv .venv && source .venv/bin/activate   # or: python -m venv .venv && source .venv/bin/activate
+uv sync   # or: pip install -e ".[dev]"
+uv run metabase-mcp-server   # or your script name from pyproject.toml
+```
+
+- **Stdio (Cursor / Claude):** run the above; set your MCP client command to `path/to/venv/bin/python -m metabase_mcp_server.server` (or your package name) with `cwd` = repo root.
+- **HTTP:** `MCP_TRANSPORT=streamable-http uv run metabase-mcp-server` (default port 8000; override with `MCP_PORT`).
+
+If you see *"No tool provider configured"*, finish steps 4–6 (connector, provider, and wiring in `server.py`).
+
+---
 
 ## What this template gives you
 
@@ -58,14 +130,16 @@ uv run pytest
 
 `tests/conftest.py` adds `src` to the path and loads `.env` from the project root so tests see env-based credentials when present. For backend credential or integration tests (e.g. connection check, calling a real tool), use the pattern from **metabase-mcp-server**: skip when credentials or optional deps are missing, use lazy imports for heavy backends, and run pytest with the project venv so all dependencies are available.
 
-## How to create a new MCP server for each tool
+## How to create a new MCP server (summary)
 
-Use this template to create **one repo per integration** (Metabase, SigNoz, Grafana, etc.) for discoverability and per-tool config.
+See **[Create a new MCP server from this template](#create-a-new-mcp-server-from-this-template)** at the top for the full step-by-step. In short: use the template → rename package and entrypoint → add toolkit + Django → uncomment and edit `connector.py` and `example_source_provider.py` (source enum + prefix) → wire provider and config in `server.py` → set env → run. One repo per integration (Metabase, Signoz, Grafana, etc.) for discoverability and per-tool config.
 
 ### 1. Create the new repo
 
 - Copy this template into a new directory, e.g. `metabase-mcp-server`, or use “Use this template” on GitHub.
 - Optionally create the repo on GitHub first and clone it, then copy template files into it.
+
+(Full steps are in the section above; the bullets below are redundant and can be removed.)
 
 ### 2. Rename the package
 
@@ -102,7 +176,7 @@ Include:
 
 ## Files and layout
 
-```
+```txt
 mcp-server-template/
 ├── .gitignore
 ├── README.md
@@ -111,8 +185,11 @@ mcp-server-template/
 │   └── mcp_template/
 │       ├── __init__.py
 │       ├── config.py
+│       ├── connector.py              # Uncomment and edit for your source
 │       ├── drd_extractor.py
-│       ├── server.py
+│       ├── drd_source_provider.py    # Generic provider (no edits needed)
+│       ├── example_source_provider.py  # Uncomment and edit source enum + prefix
+│       ├── server.py                 # Add toolkit path + set _provider
 │       └── tool_provider.py
 └── tests/
     └── test_basic_server.py
