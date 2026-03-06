@@ -47,6 +47,15 @@ uv sync
 
 Override port with `MCP_PORT`, name with `MCP_SERVER_NAME`. See `config.py` for all env vars.
 
+## Testing
+
+```bash
+# Install pytest if needed (e.g. add [project.optional-dependencies] dev = ["pytest"] in pyproject.toml, then uv sync --extra dev)
+uv run pytest
+```
+
+`tests/conftest.py` adds `src` to the path and loads `.env` from the project root so tests see env-based credentials when present. For backend credential or integration tests (e.g. connection check, calling a real tool), use the pattern from **metabase-mcp-server**: skip when credentials or optional deps are missing, use lazy imports for heavy backends, and run pytest with the project venv so all dependencies are available.
+
 ## How to create a new MCP server for each tool
 
 Use this template to create **one repo per integration** (Metabase, SigNoz, Grafana, etc.) for discoverability and per-tool config.
