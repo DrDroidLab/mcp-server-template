@@ -1,0 +1,27 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mcp-server-template"
+version = "0.1.0"
+description = "Template for building Python MCP servers (FastMCP-based) with optional drdroid-debug-toolkit integration."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "mcp",
+  "python-dotenv",
+]
+
+[project.optional-dependencies]
+drd = [
+  # Install from your preferred source, for example:
+  # "drdroid-debug-toolkit @ git+https://github.com/<org>/drdroid-debug-toolkit.git"
+]
+
+[project.scripts]
+mcp-template-server = "mcp_template.server:main"
+
+[tool.uv]
+package = false
+
