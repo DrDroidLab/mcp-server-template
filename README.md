@@ -48,7 +48,7 @@ Minimal template for building Python MCP servers with the official `mcp` SDK (Fa
 
 - **File:** `src/<name>_mcp_server/server.py`
 - **What to do:**
-  1. At the top (before other local imports), add the **toolkit path** setup so `core` is importable (see [metabase-mcp-server](https://github.com/your-org/metabase-mcp-server) `server.py` for the block that inserts `drdroid_debug_toolkit` into `sys.path`).
+  1. At the top (before other local imports), add the **toolkit path** setup so `core` is importable (see [metabase-mcp-server](https://github.com/DrDroidLab/metabase-mcp-server) `server.py` for the block that inserts `drdroid_debug_toolkit` into `sys.path`).
   2. Load backend config (URL, API key) from env or `config.py`.
   3. Create your provider and set it: `_provider = MetabaseToolProvider(url, api_key)` (or `set_tool_provider(...)`), so it runs before `main()`.
 
@@ -200,7 +200,7 @@ mcp-server-template/
 
 ## Example: Metabase MCP server
 
-The **[metabase-mcp-server](https://github.com/your-org/metabase-mcp-server)** repo is an example created from this template. It:
+The **[metabase-mcp-server](https://github.com/DrDroidLab/metabase-mcp-server)** repo is an example created from this template. It:
 
 - Uses `MetabaseSourceManager` from `drdroid-debug-toolkit`.
 - Builds a connector from `METABASE_URL` and `METABASE_API_KEY`.
