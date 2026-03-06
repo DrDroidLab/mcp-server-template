@@ -151,6 +151,7 @@ def extract_tools_from_source_manager(source_manager: Any, prefix: Optional[str]
                 parameters_schema=parameters_schema,
                 metadata={
                     "task_type": task_type_name,
+                    "task_type_value": task_type_value,
                     "category": category,
                 },
             )

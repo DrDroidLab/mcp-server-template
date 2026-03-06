@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 from typing import Any, Dict, List, Optional
 
 from mcp.server.fastmcp import FastMCP
@@ -11,7 +12,11 @@ from .tool_provider import ToolDefinition, ToolProvider
 app_config = load_config()
 mcp = FastMCP(app_config.server.name, json_response=True)
 
-# Optional: set this to expose dynamic tools from a backend (e.g. drd SourceManager).
+# Set your provider here (required for the server to run). Example:
+# from .connector import MCP_CONNECTOR_ID, MCP_CONNECTOR_NAME  # after uncommenting connector.py
+# from .example_source_provider import ExampleToolProvider       # after uncommenting example_source_provider.py
+# if app_config.backend and getattr(app_config.backend, "service_url", None):
+#     _provider = ExampleToolProvider(app_config.backend.service_url, app_config.backend.service_api_key or "")
 _provider: Optional[ToolProvider] = None
 
 
@@ -91,6 +96,14 @@ def main() -> None:
     - "streamable-http"
     - "http"
     """
+    if _provider is None:
+        print(
+            "No tool provider configured. Uncomment and edit connector.py and "
+            "example_source_provider.py for your source, then set _provider (or "
+            "set_tool_provider) in server.py.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
 
     transport = app_config.server.transport
     if transport not in {"stdio", "streamable-http", "http"}:
